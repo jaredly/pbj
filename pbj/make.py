@@ -10,7 +10,7 @@ build = Builder('PJs')
 def jslib(name):
     cmd('cat', 'jslib/*.js', '>', 'build/pjslib.js')
 
-build.cmd('jstest', ('js', 'test/runtests.js'))
+build.cmd('jstest', ('js', 'test/runtests.js'), depends=['@jslib'])
 
 build.clean('build', 'test/py/*.js')
 
