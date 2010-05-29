@@ -2,9 +2,7 @@ Python Build Juice - ok, so I made a pythonic building framework and I wanted to
 
 Anyway, PBJ is a simple, extensible pythonic build framework, whose purpose is to be dead simple for the basic cases.
 
-Here's an example:
-
-.. code-block:: python
+Here's an example::
 
    from pbj import Builder, cmd
    import os
@@ -12,12 +10,11 @@ Here's an example:
    build = Builder("PJs")
 
    build.cmd("jstest", ("js", "test/runtests.js"))
- 
-   build.clean("build", "test/py/\*.js")
+   build.clean("build", "test/py/*.js")
 
-   @build.file("build/pjslib.js", depends="jslib/\*.js")
+   @build.file("build/pjslib.js", depends="jslib/*.js")
    def jslib(name):
-       text = cmd("cat", "jslib/\*.js")
+       text = cmd("cat", "jslib/*.js")
        if not os.path.exists("build"):
            os.mkdir("build")
        open("build/pjslib.js").write(text)
