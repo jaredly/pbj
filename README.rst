@@ -1,5 +1,9 @@
 Python Build Juice - ok, so I made a pythonic building framework and I wanted to backronym pbj... feel free to comment if you can think of a better "J" word =)
 
+**New**
+
+just added zsh completion! fond in the file ``zsh.sugar``
+
 Anyway, PBJ is a simple, extensible pythonic build framework, whose purpose is to be dead simple for the basic cases.
 
 Here's an example::
