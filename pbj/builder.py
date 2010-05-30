@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
+import sys
 from targets import reg
-
 from optparse import OptionParser
+from errors import PBJFailed
 
 class Builder:
     def __init__(self, name):
@@ -22,27 +23,8 @@ class Builder:
                 target = cls(*pos, **kwd)
                 self.targets.append(target)
                 return target
+            return meta
         raise AttributeError
-
-    '''
-    def target(self, function=None, name=None, depends=[]):
-        actual = Target(name, depends)
-        self.targets.append(actual)
-        if function is not None:
-            return actual(function)
-        return actual
-
-    def file(self, filename,
-        actual = File(name, output)
-        self.targets.append(actual)
-        return actual
-    
-    def clean(self, *files):
-        self.cmd('clean', ('rm', '-rf') + tuple(files))
-
-    def cmd(self, name, command):
-        actual = CmdTarget(name, command)
-    '''
     
     def add(self, target):
         self.targets.append(target)
@@ -51,11 +33,33 @@ class Builder:
     def _resolve(self, dep):
         changed = False
         for target in self.targets:
-            if target.appies_to(dep):
+            if target.applies_to(dep):
                 ## TODO: kill circular deps
                 if target.check_depends(self):
                     target.run()
                     changed = True
         return changed
+
+    def run(self):
+        if len(sys.argv) < 2:
+            print ' '.join(target.name for target in self.targets)
+            return
+        name = sys.argv.pop(1)
+        for target in self.targets:
+            if target.name == name:
+                if target.check_depends(self):
+                    try:
+                        target.run(*sys.argv[1:])
+                    except PBJFailed:
+                        print '[pbj] failed to build', name
+                else:
+                    print 'Nothing to be done for ' + name
+        '''
+        parser = OptionParser('Usage [%s]' % 'ho')
+        for name in args:
+            less
+        parser.add_option('--' + name, 
+        opts, args = parse.parse_args()
+        '''
 
 # vim: et sw=4 sts=4
