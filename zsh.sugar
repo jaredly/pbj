@@ -1,7 +1,9 @@
 add the following to your .zshrc file
 
-_make_pbj() {
-    reply=(`./make.pbj --list`)
+_make_pbj() {                     
+    local a
+    read -l a
+    reply=(`./make.pbj --list "$a"`)
 }
 compctl -K _make_pbj ./make.pbj
 

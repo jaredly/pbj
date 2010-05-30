@@ -4,10 +4,11 @@ from reg import register
 
 @register('target')
 class Target:
-    def __init__(self, name=None, depends=[], always=False):
+    def __init__(self, name=None, depends=[], always=False, completion=[]):
         self.name = name
         self.depends = depends
         self.always = always
+        self.completion = completion
         self.fn = None
 
     def __call__(self, fn):
@@ -32,8 +33,8 @@ class Target:
             return True
         return changed
 
-    def get_arguments(self):
-        return []
+    def get_completion(self):
+        return self.completion
 
     def run(self, *args):
         self.fn(*args)
