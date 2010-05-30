@@ -45,8 +45,13 @@ class Builder:
             print ' '.join(target.name for target in self.targets)
             return
         name = sys.argv.pop(1)
+        if name == '--list':
+            print ' '.join(target.name for target in self.targets)
+            return
+        found = False
         for target in self.targets:
             if target.name == name:
+                found = True
                 if target.check_depends(self):
                     try:
                         target.run(*sys.argv[1:])
@@ -54,6 +59,8 @@ class Builder:
                         print '[pbj] failed to build', name
                 else:
                     print 'Nothing to be done for ' + name
+        if not found:
+            print 'Unknown target %s' % name
         '''
         parser = OptionParser('Usage [%s]' % 'ho')
         for name in args:

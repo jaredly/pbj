@@ -1,0 +1,8 @@
+add the following to your .zshrc file
+
+_make_pbj() {
+    reply=(`./make.pbj --list`)
+}
+compctl -K _make_pbj ./make.pbj
+
+then you get target autocompletion
