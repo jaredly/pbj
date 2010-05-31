@@ -1,4 +1,4 @@
-Python Build Juice - ok, so I made a pythonic building framework and I wanted to backronym pbj... feel free to comment if you can think of a better "J" word =)
+Python Build Jelly
 
 **New**
 
