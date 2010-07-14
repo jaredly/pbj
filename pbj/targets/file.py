@@ -13,14 +13,16 @@ class FileTarget(Target):
         return target in ['@' + self.name, self.filename]
 
     def check_depends(self, builder):
-        if not os.path.exists(self.filename):
-            return True
         if Target.check_depends(self, builder):
+            return True
+        if not os.path.exists(self.filename):
             return True
         last_mod = os.path.getctime(self.filename)
         for dep in self.depends:
             if dep.startswith('@'):continue
-            files = glob.glob(dep)
+            files = glob.glob(os.path.expanduser(dep))
+            if not len(files):
+                raise Exception, 'file not found -- depended on by ' + self.filename
             for fname in files:
                 if last_mod < os.path.getctime(fname):
                     return True

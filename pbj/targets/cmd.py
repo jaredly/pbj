@@ -5,15 +5,16 @@ from subprocess import Popen, PIPE
 import os
 
 def cmd(*command, **kw):
-    out, err = Popen(command, shell=kw.get('shell', False), stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True).communicate()
+    out, err = Popen(command, shell=kw.get('shell', False), cwd=kw.get('cwd', None), stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True).communicate()
     # print out, err
     return out, err
 
 @register('cmd', required=2)
 class CmdTarget(Target):
-    def __init__(self, name, command, shell=False, echo=True, **kwargs):
+    def __init__(self, name, command, shell=False, echo=True, cwd=None, **kwargs):
         Target.__init__(self, name, **kwargs)
         self.command = command
+        self.cwd = cwd
         self.echo = echo
         self.shell = shell
 
@@ -23,7 +24,7 @@ class CmdTarget(Target):
     def run(self):
         if self.echo:
             print ' '.join(self.command)
-        o, e = cmd(*self.command, shell=self.shell)
+        o, e = cmd(*self.command, shell=self.shell, cwd=self.cwd)
         if o:
             print o,
         if e:

@@ -6,6 +6,9 @@ from target import Target
 @register('clean', required=1)
 class CleanTarget(Target):
     def __init__(self, *files, **kwargs):
+        self.keep = kwargs.get('keep', [])
+        if 'keep' in kwargs:
+            del kwargs['keep']
         Target.__init__(self, 'clean', **kwargs)
         self.files = files
 
@@ -15,6 +18,8 @@ class CleanTarget(Target):
     def run(self):
         for fname in self.files:
             for item in glob.glob(fname):
+                if item in self.keep:
+                    continue
                 remove(item)
 
 def remove(item):

@@ -32,12 +32,16 @@ class Builder:
     
     def _resolve(self, dep):
         changed = False
+        found = False
         for target in self.targets:
             if target.applies_to(dep):
+                found = True
                 ## TODO: kill circular deps
                 if target.check_depends(self):
                     target.run()
                     changed = True
+        if not found and dep[0] == '@':
+            raise PBJFailed('dependency not found "%s"' % dep)
         return changed
 
     def run(self):
