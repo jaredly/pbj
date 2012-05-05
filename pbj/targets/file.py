@@ -22,7 +22,7 @@ class FileTarget(Target):
             if dep.startswith('@'):continue
             files = glob.glob(os.path.expanduser(dep))
             if not len(files):
-                raise Exception, 'file not found -- depended on by ' + self.filename
+                raise Exception, 'file not found %s -- depended on by ' % dep + self.filename
             for fname in files:
                 if last_mod < os.path.getctime(fname):
                     return True

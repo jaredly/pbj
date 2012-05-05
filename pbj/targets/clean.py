@@ -13,7 +13,7 @@ class CleanTarget(Target):
         self.files = files
 
     def __call__(self, fn):
-        raise Exception('CmdTarget is not a function wrapper')
+        raise Exception('CleanTarget is not a function wrapper')
 
     def run(self):
         for fname in self.files:
@@ -28,7 +28,6 @@ def remove(item):
             remove(os.path.join(item, child))
     elif os.path.exists(item):
         os.remove(item)
-
 
 def clean(*files, **kwargs):
     return CmdTarget('clean', ('rm', '-rf') + tuple(files), **kwargs)
