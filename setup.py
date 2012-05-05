@@ -13,7 +13,7 @@ setup(
     version='0.1',
     url='http://jaredforsyth.com/projects/pbj',
     download_url='http://github.com/jabapyth/pbj',
-    packages=['pbj'],
+    packages=['pbj', 'pbj.targets'],
     description='python build jelly - a simple, extensible pythonic build framework',
     classifiers=[
         'License :: OSI Approved :: MIT License',
