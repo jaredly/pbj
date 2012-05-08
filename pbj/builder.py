@@ -5,6 +5,8 @@ from targets import reg
 from optparse import OptionParser
 from errors import PBJFailed
 
+from clog import LOG
+
 class Builder:
     def __init__(self, name):
         self.name = name
@@ -16,7 +18,7 @@ class Builder:
             def meta(*pos, **kwd):
                 if len(pos) < required:
                     raise TypeError('%s takes at least %s arguments' % (name, required))
-                if required == 0 and len(pos) == 1:
+                if required == 0 and len(pos) == 1 and callable(pos[0]):
                     target = cls(**kwd)
                     self.targets.append(target)
                     return target(pos[0])
@@ -38,8 +40,11 @@ class Builder:
                 found = True
                 ## TODO: kill circular deps
                 if target.check_depends(self):
+                    LOG.info('building dependent target "%s" (%s)' % (target.name, dep))
                     target.run()
                     changed = True
+                else:
+                    LOG.info('nothing to do for "%s" (%s)' % (target.name, dep))
         if not found and dep[0] == '@':
             raise PBJFailed('dependency not found "%s"' % dep)
         return changed
@@ -59,6 +64,7 @@ class Builder:
                 raise Exception('invalid PBJ configuration; multiple rules for %s' % target.name)
             targets[target.name] = target
 
+        force = False
         name = sys.argv.pop(1)
         if name == '--list':
             if len(sys.argv) == 1:
@@ -79,16 +85,20 @@ class Builder:
 }
 compctl -K _make_pbj ./make.pbj '''
             return 
+        elif name in ('-f', '--force'):
+            force = True
+            name = sys.argv.pop(1)
         if name in targets:
             target = targets[name]
-            if target.check_depends(self):
+            if target.check_depends(self) or force:
                 try:
+                    LOG.info('building target "%s"' % name)
                     target.run(*sys.argv[1:])
                 except PBJFailed:
-                    print '[pbj] failed to build', name
+                    LOG.info('failed to build %s' % name)
             else:
-                print 'Nothing to be done for ' + name
+                LOG.info('nothing to do for %s' % name)
         else:
-            print 'Unknown target %s' % name
+            LOG.error('Unknown target %s' % name)
 
 # vim: et sw=4 sts=4

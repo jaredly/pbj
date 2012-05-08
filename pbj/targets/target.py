@@ -37,6 +37,8 @@ class Target:
         return self.completion
 
     def run(self, *args):
+        if not self.fn:
+            raise Exception('Invalid Configuration: target %s has no associated function' % self.name)
         self.fn(*args)
 
 # vim: et sw=4 sts=4
