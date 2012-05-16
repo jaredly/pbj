@@ -5,8 +5,8 @@ from target import Target
 
 @register('multi')
 class Multi(Target):
-    def __init__(self, name, depends):
-        Target.__init__(self, name, depends=depends)
+    def __init__(self, name, depends, help=''):
+        Target.__init__(self, name, depends=depends, help=help)
 
     def __call__(self, fn):
         raise Exception('MultiTarget is not a function wrapper')

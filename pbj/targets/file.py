@@ -5,6 +5,24 @@ import os, glob
 
 @register('file', required=1)
 class FileTarget(Target):
+    '''A build target based around producing a file.
+
+    A FileTarget only builds when the dependant files are
+    more recently modified than the target file. (or if
+    the --force option is used). The target target file
+    name is also registered as an alternate target name.
+
+    Arguments:
+        fname: the filename to produce
+
+    example usage::
+
+        @build.file("main.bin", depends=['main.c'])
+        def main(outfile):
+            """Compile the program"""
+            compile_c(infile='main.c', outfile='main.bin')
+
+    '''
     def __init__(self, fname, *args, **kwargs):
         Target.__init__(self, *args, **kwargs)
         self.filename = fname

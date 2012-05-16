@@ -7,6 +7,13 @@ from errors import PBJFailed
 
 from clog import LOG
 
+GENERAL_DOCS = '''\
+## general options ##
+   --list [target]   list completion options
+   --zsh             output zsh completion function 
+                     (to get completion, try `./make.pbj --zsh >> ~/.zshrc`)
+'''
+
 class Builder:
     def __init__(self, name):
         self.name = name
@@ -48,15 +55,29 @@ class Builder:
         if not found and dep[0] == '@':
             raise PBJFailed('dependency not found "%s"' % dep)
         return changed
+    
+    def help(self):
+        res = '## build targets ##\n'
+        targets = []
+        maxname = 0
+        for target in self.targets:
+            if len(target.name) > maxname:
+                maxname = len(target.name)
+            targets.append((target.name, target.short_help))
+        for name, help in targets:
+            line = '   ' + name.ljust(maxname) + ':  '
+            hl = help.splitlines()
+            line += hl.pop(0)
+            for hline in hl:
+                line += '\n'.ljust(maxname + 4 + 3) + hline
+            res += line+ '\n'
+        res += '\n'
+        res += GENERAL_DOCS
+        print res
 
     def run(self):
         if len(sys.argv) < 2:
-            print '## build targets ##'
-            print '\t' + ' '.join(target.name for target in self.targets)
-            print
-            print '## options ##'
-            print '\t--list [target]\t\tlist completion options'
-            print '\t--zsh\t\t\toutput zsh completion function (to get completion, try `./make.pbj --zsh >> ~/.zshrc`)'
+            self.help()
             return
         targets = {}
         for target in self.targets:
