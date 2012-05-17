@@ -108,7 +108,7 @@ class Builder:
                     target = targets[parts[1]]
                     print ' '.join(target.get_completion())
                 else:
-                    print ''# ' '.join(targets.keys())
+                    print ' '.join(targets.keys())
             return
         elif name == '--zsh':
             print ZSH_OUT
@@ -121,7 +121,7 @@ class Builder:
         if name in targets:
             target = targets[name]
             if target.optparser:
-                parser, 
+                pass#parser, 
             if target.check_depends(self) or force:
                 try:
                     LOG.info('building target "%s"' % name)
