@@ -1,7 +1,36 @@
 #!/usr/bin/env python
 
 import pydoc
+import inspect
+from optparse import OptionParser
 from reg import register
+
+def make_optparser(fn):
+    '''Generate an option parser based on the function arguments'''
+    parser = OptionParser()
+    argspec = inspect.getargspec(fn)
+    docs = pydoc.getdoc(fn)
+
+    helps = {}
+    ln = docs.splitlines()
+    while ln and ln[0].strip().lower().strip(':') not in ('arguments', 'args'):
+        ln.pop(0)
+    for line in ln[1:]:
+        if ':' in line:
+            name, help = line.split(':', 1)
+            name = name.split('(')[0]
+            helps[name] = help
+
+    if argspec.defaults:
+        dl = len(argspec.defaults)
+        required = argspec.args[:-dl]
+        for arg, default in zip(argspec.args[-dl:], argspec.defaults):
+            parser.add_option('--' + arg, default=default, help=helps.get(arg, None))
+    else:
+        required = argspec.args
+
+    return parser, required
+    
 
 @register('target')
 class Target:
@@ -21,6 +50,7 @@ class Target:
         self.always = always
         self.completion = completion
         self.fn = None
+        self.optparser = None
         self.set_help(help)
 
     def __call__(self, fn):
@@ -29,6 +59,7 @@ class Target:
         if self.help == '' and fn.__doc__:
             self.set_help(pydoc.getdoc(fn))
         self.fn = fn
+        self.optparser = make_optparser(fn)
 
     def set_help(self, help):
         short = []

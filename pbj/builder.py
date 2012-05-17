@@ -14,6 +14,15 @@ GENERAL_DOCS = '''\
                      (to get completion, try `./make.pbj --zsh >> ~/.zshrc`)
 '''
 
+# TODO: make the completion as good as django-manage.py
+ZSH_OUT = '''_make_pbj() {                     
+    local a
+    read -l a
+    reply=(`./make.pbj --list "$a"`)
+}
+compctl -K _make_pbj ./make.pbj '''
+
+
 class Builder:
     def __init__(self, name):
         self.name = name
@@ -25,8 +34,8 @@ class Builder:
             def meta(*pos, **kwd):
                 if len(pos) < required:
                     raise TypeError('%s takes at least %s arguments' % (name, required))
-                if required == 0 and len(pos) == 1 and callable(pos[0]):
-                    target = cls(**kwd)
+                if required == 0 and len(pos) == 1 and not kwd and callable(pos[0]):
+                    target = cls()
                     self.targets.append(target)
                     return target(pos[0])
                 target = cls(*pos, **kwd)
@@ -47,7 +56,8 @@ class Builder:
                 found = True
                 ## TODO: kill circular deps
                 if target.check_depends(self):
-                    LOG.info('building dependent target "%s" (%s)' % (target.name, dep))
+                    LOG.info('building dependent target "%s" (%s)'
+                                % (target.name, dep))
                     target.run()
                     changed = True
                 else:
@@ -65,7 +75,7 @@ class Builder:
                 maxname = len(target.name)
             targets.append((target.name, target.short_help))
         for name, help in targets:
-            line = '   ' + name.ljust(maxname) + ':  '
+            line = '   ' + name.ljust(maxname) + ' --  '
             hl = help.splitlines()
             line += hl.pop(0)
             for hline in hl:
@@ -82,7 +92,8 @@ class Builder:
         targets = {}
         for target in self.targets:
             if targets.has_key(target.name):
-                raise Exception('invalid PBJ configuration; multiple rules for %s' % target.name)
+                raise Exception('invalid PBJ configuration; multiple rules for %s'
+                                    % target.name)
             targets[target.name] = target
 
         force = False
@@ -91,26 +102,26 @@ class Builder:
             if len(sys.argv) == 1:
                 print ' '.join(targets.keys())
             else:
+                ## ?? why split the first argument ??
                 parts = sys.argv[1].split()
                 if len(parts)>1 and parts[1] in targets:
                     target = targets[parts[1]]
                     print ' '.join(target.get_completion())
                 else:
-                    print ' '.join(targets.keys())
+                    print ''# ' '.join(targets.keys())
             return
         elif name == '--zsh':
-            print '''_make_pbj() {                     
-    local a
-    read -l a
-    reply=(`./make.pbj --list "$a"`)
-}
-compctl -K _make_pbj ./make.pbj '''
+            print ZSH_OUT
             return 
+        '''
         elif name in ('-f', '--force'):
             force = True
             name = sys.argv.pop(1)
+        '''
         if name in targets:
             target = targets[name]
+            if target.optparser:
+                parser, 
             if target.check_depends(self) or force:
                 try:
                     LOG.info('building target "%s"' % name)
