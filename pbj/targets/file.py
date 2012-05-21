@@ -23,8 +23,15 @@ class FileTarget(Target):
             compile_c(infile='main.c', outfile='main.bin')
 
     '''
+    passes = [('outfile', 'the filename')]
+
     def __init__(self, fname, *args, **kwargs):
+        self.pass_filename = kwargs.get('pass_filename', False)
+        if 'pass_filename' in kwargs:
+            del kwargs['pass_filename']
         Target.__init__(self, *args, **kwargs)
+        if self.pass_filename:
+            self.passes = 1
         self.filename = fname
 
     def applies_to(self, target):
@@ -46,7 +53,10 @@ class FileTarget(Target):
                     return True
         return False
 
-    def run(self, *args):
-        self.fn(self.filename, *args)
+    def run(self, *args, **kwargs):
+        if self.pass_filename:
+            self.fn(self.filename, *args, **kwargs)
+        else:
+            self.fn(*args, **kwargs)
 
 # vim: et sw=4 sts=4

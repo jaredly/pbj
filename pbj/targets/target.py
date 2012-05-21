@@ -3,34 +3,100 @@
 import pydoc
 import inspect
 from optparse import OptionParser
+from argparse import ArgumentParser
 from reg import register
 
-def make_optparser(fn):
-    '''Generate an option parser based on the function arguments'''
-    parser = OptionParser()
-    argspec = inspect.getargspec(fn)
-    docs = pydoc.getdoc(fn)
+'''argparser example:
 
+@build.target
+def make(weeks=5, outfile=consts.OUTFILE, debug=False):
+    """Generate the summary file for a given number of weeks
+
+    Arguments:
+        weeks(int):     the number of weeks
+        outfile(str):   the output filename
+        debug(flag):    enable debug output
+    """
+'''
+
+TYPS = {
+    'int': int,
+    'float': float,
+    'str': str,
+    'bool': bool,
+}
+def parsedoc(text):
     helps = {}
-    ln = docs.splitlines()
+    typs = {}
+    ln = text.splitlines()
     while ln and ln[0].strip().lower().strip(':') not in ('arguments', 'args'):
         ln.pop(0)
     for line in ln[1:]:
         if ':' in line:
             name, help = line.split(':', 1)
-            name = name.split('(')[0]
-            helps[name] = help
+            # use regex
+            typ = str
+            if '(' in name:
+                typ_ = name.split('(', 1)[-1].strip('() ')
+                if typ_ in TYPS:
+                    typ = TYPS[typ_]
+                else:
+                    raise Exception('Invalid Help definition: unknown type %s for argument %s' % (typ_, name))
+            name = name.split('(')[0].strip()
+            helps[name] = help.strip()
+            typs[name] = typ
+    return helps, typs
+
+def parse_argspec(argspec, target_args):
+    positional = []
+    optional = []
 
     if argspec.defaults:
         dl = len(argspec.defaults)
-        required = argspec.args[:-dl]
-        for arg, default in zip(argspec.args[-dl:], argspec.defaults):
-            parser.add_option('--' + arg, default=default, help=helps.get(arg, None))
+        if dl > len(argspec.args) - target_args:
+            values = argspec.defaults[dl - (len(argspec.args) - target_args):]
+            dl = len(argspec.args) - target_args
+        else:
+            values = argspec.defaults
+        positional = argspec.args[target_args:-dl]
+        keys = argspec.args[-dl:]
+        optional = zip(keys, values)
     else:
-        required = argspec.args
+        positional = list(argspec.args[target_args:])
+    return positional, optional
 
-    return parser, required
-    
+def make_argparser(fn, target_args):
+    '''Generate an option parser based on the function arguments'''
+
+    docs = pydoc.getdoc(fn)
+    syn, rest = pydoc.splitdoc(docs)
+    parser = ArgumentParser(description=syn)
+    helps, typs = parsedoc(rest)
+    #print helps, rest
+
+    parser.add_argument('--force', '-f', help='run even if all dependencies are satisfied', action='store_true')
+
+    argspec = inspect.getargspec(fn)
+    pos, opt = parse_argspec(argspec, target_args)
+
+    for arg in pos:
+        parser.add_argument(arg, help=helps.get(arg, None), type=typs.get(arg, str))
+        ## add type=, work with flags, etc
+
+    for arg, default in opt:
+        parser.add_argument('--' + arg, default=default, help=helps.get(arg, None), type=typs.get(arg, str))
+
+    if argspec.varargs:
+        parser.add_argument('--' + argspec.varargs, nargs='*', help=helps.get(argspec.varargs, None), type=typs.get(arg, str))
+
+    def meta():
+        res = parser.parse_args()
+        dct = vars(res)
+        pargs = list(dct[i] for i in pos)
+        dargs = dict((i, dct[i]) for i, j in opt)
+        return pargs, dargs, res
+
+    return meta
 
 @register('target')
 class Target:
@@ -44,6 +110,8 @@ class Target:
         help(str)     : help text -- defaults to the functions docstring
 
     '''
+    passes = []
+
     def __init__(self, name=None, depends=[], always=False, completion=[], help=''):
         self.name = name
         self.depends = depends
@@ -51,6 +119,7 @@ class Target:
         self.completion = completion
         self.fn = None
         self.optparser = None
+        self.passes = 0
         self.set_help(help)
 
     def __call__(self, fn):
@@ -59,7 +128,7 @@ class Target:
         if self.help == '' and fn.__doc__:
             self.set_help(pydoc.getdoc(fn))
         self.fn = fn
-        self.optparser = make_optparser(fn)
+        self.argparser = make_argparser(fn, self.passes)
 
     def set_help(self, help):
         short = []
@@ -91,9 +160,10 @@ class Target:
     def get_completion(self):
         return self.completion
 
-    def run(self, *args):
+    def run(self, *pargs, **dargs):
         if not self.fn:
-            raise Exception('Invalid Configuration: target %s has no associated function' % self.name)
-        self.fn(*args)
+            raise Exception('Invalid Configuration: '
+                    'target %s has no associated function' % self.name)
+        self.fn(*pargs, **dargs)
 
 # vim: et sw=4 sts=4

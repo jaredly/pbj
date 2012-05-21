@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import inspect
 from targets import reg
 from optparse import OptionParser
 from errors import PBJFailed
@@ -31,10 +32,11 @@ class Builder:
     def __getattr__(self, name):
         if name in reg.target_reg:
             cls, required = reg.target_reg[name]
+            aspec = inspect.getargspec(cls.__init__)
             def meta(*pos, **kwd):
                 if len(pos) < required:
                     raise TypeError('%s takes at least %s arguments' % (name, required))
-                if required == 0 and len(pos) == 1 and not kwd and callable(pos[0]):
+                if not required and len(pos) == 1 and not kwd and callable(pos[0]):
                     target = cls()
                     self.targets.append(target)
                     return target(pos[0])
@@ -120,12 +122,17 @@ class Builder:
         '''
         if name in targets:
             target = targets[name]
-            if target.optparser:
-                pass#parser, 
-            if target.check_depends(self) or force:
+            options = None
+            if target.argparser:
+                pargs, dargs, res = target.argparser()
+            else:
+                pargs = []
+                dargs = {}
+                res = default_parser()
+            if target.check_depends(self) or res.force:
                 try:
                     LOG.info('building target "%s"' % name)
-                    target.run(*sys.argv[1:])
+                    target.run(*pargs, **dargs)
                 except PBJFailed:
                     LOG.info('failed to build %s' % name)
             else:
