@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import pydoc
 import inspect
 from optparse import OptionParser
@@ -9,15 +10,18 @@ from reg import register
 '''argparser example:
 
 @build.target
-def make(weeks=5, outfile=consts.OUTFILE, debug=False):
+def make(type, weeks=5, outfile=consts.OUTFILE, debug=False):
     """Generate the summary file for a given number of weeks
 
     Arguments:
+        type(str):      the type of output
         weeks(int):     the number of weeks
         outfile(str):   the output filename
         debug(flag):    enable debug output
     """
 '''
+
+##THINK ABOUT: conditionally disabling help parsing?
 
 TYPS = {
     'int': int,
@@ -65,16 +69,18 @@ def parse_argspec(argspec, target_args):
         positional = list(argspec.args[target_args:])
     return positional, optional
 
-def make_argparser(fn, target_args):
+def make_argparser(name, fn, target_args, always):
     '''Generate an option parser based on the function arguments'''
 
     docs = pydoc.getdoc(fn)
     syn, rest = pydoc.splitdoc(docs)
-    parser = ArgumentParser(description=syn)
+    parser = ArgumentParser(sys.argv[0] + ' ' + name, description=syn)
     helps, typs = parsedoc(rest)
     #print helps, rest
 
-    parser.add_argument('--force', '-f', help='run even if all dependencies are satisfied', action='store_true')
+    if not always:
+        parser.add_argument('--force', '-f',
+                help='run even if all dependencies are satisfied', action='store_true')
 
     argspec = inspect.getargspec(fn)
     pos, opt = parse_argspec(argspec, target_args)
@@ -84,10 +90,12 @@ def make_argparser(fn, target_args):
         ## add type=, work with flags, etc
 
     for arg, default in opt:
-        parser.add_argument('--' + arg, default=default, help=helps.get(arg, None), type=typs.get(arg, str))
+        parser.add_argument('--' + arg, default=default,
+                help=helps.get(arg, None), type=typs.get(arg, str))
 
     if argspec.varargs:
-        parser.add_argument('--' + argspec.varargs, nargs='*', help=helps.get(argspec.varargs, None), type=typs.get(arg, str))
+        parser.add_argument('--' + argspec.varargs, nargs='*',
+                help=helps.get(argspec.varargs, None), type=typs.get(arg, str))
 
     def meta():
         res = parser.parse_args()
@@ -113,7 +121,7 @@ class Target:
     passes = []
 
     def __init__(self, name=None, depends=[], always=False, completion=[], help=''):
-        self.name = name
+        self.name = unicode(name)
         self.depends = depends
         self.always = always
         self.completion = completion
@@ -128,7 +136,8 @@ class Target:
         if self.help == '' and fn.__doc__:
             self.set_help(pydoc.getdoc(fn))
         self.fn = fn
-        self.argparser = make_argparser(fn, self.passes)
+        self.argparser = make_argparser(self.name, fn, self.passes,
+                self.always or not self.depends)
 
     def set_help(self, help):
         short = []

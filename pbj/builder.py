@@ -23,6 +23,7 @@ ZSH_OUT = '''_make_pbj() {
 }
 compctl -K _make_pbj ./make.pbj '''
 
+import inspect
 
 class Builder:
     def __init__(self, name):
@@ -34,13 +35,17 @@ class Builder:
             cls, required = reg.target_reg[name]
             aspec = inspect.getargspec(cls.__init__)
             def meta(*pos, **kwd):
+                callframe = inspect.getouterframes(inspect.currentframe())[1]
+                '''
                 if len(pos) < required:
                     raise TypeError('%s takes at least %s arguments' % (name, required))
+                '''
                 if not required and len(pos) == 1 and not kwd and callable(pos[0]):
                     target = cls()
                     self.targets.append(target)
                     return target(pos[0])
                 target = cls(*pos, **kwd)
+                target.init_frame = callframe
                 self.targets.append(target)
                 return target
             return meta
@@ -79,9 +84,10 @@ class Builder:
         for name, help in targets:
             line = '   ' + name.ljust(maxname) + ' --  '
             hl = help.splitlines()
-            line += hl.pop(0)
-            for hline in hl:
-                line += '\n'.ljust(maxname + 4 + 3) + hline
+            if hl:
+                line += hl.pop(0)
+                for hline in hl:
+                    line += '\n'.ljust(maxname + 4 + 3) + hline
             res += line+ '\n'
         res += '\n'
         res += GENERAL_DOCS
@@ -133,6 +139,7 @@ class Builder:
                 try:
                     LOG.info('building target "%s"' % name)
                     target.run(*pargs, **dargs)
+                    LOG.info('finished building target "%s"' % name)
                 except PBJFailed:
                     LOG.info('failed to build %s' % name)
             else:

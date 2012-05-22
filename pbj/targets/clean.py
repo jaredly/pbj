@@ -3,12 +3,15 @@ import os
 from reg import register
 from target import Target
 
+class ConfigurationError(Exception):
+    pass
+
 @register('clean', required=1)
 class CleanTarget(Target):
     def __init__(self, *files, **kwargs):
-        self.keep = kwargs.get('keep', [])
-        if 'keep' in kwargs:
-            del kwargs['keep']
+        if not files:
+            raise ConfigurationError('You must specify at least one file to clean')
+        self.keep = kwargs.pop('keep', [])
         Target.__init__(self, 'clean', **kwargs)
         self.files = files
 

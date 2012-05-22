@@ -23,7 +23,6 @@ class FileTarget(Target):
             compile_c(infile='main.c', outfile='main.bin')
 
     '''
-    passes = [('outfile', 'the filename')]
 
     def __init__(self, fname, *args, **kwargs):
         self.pass_filename = kwargs.get('pass_filename', False)

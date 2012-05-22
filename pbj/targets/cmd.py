@@ -5,7 +5,9 @@ from subprocess import Popen, PIPE
 import os
 
 def cmd(*command, **kw):
-    out, err = Popen(command, shell=kw.get('shell', False), cwd=kw.get('cwd', None), stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True).communicate()
+    out, err = Popen(command, shell=kw.get('shell', False),
+            cwd=kw.get('cwd', None), stdin=PIPE, stdout=PIPE,
+            stderr=PIPE, close_fds=True).communicate()
     # print out, err
     return out, err
 
