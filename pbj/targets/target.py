@@ -126,7 +126,7 @@ class Target:
         self.always = always
         self.completion = completion
         self.fn = None
-        self.optparser = None
+        self.argparser = None
         self.passes = 0
         self.set_help(help)
 

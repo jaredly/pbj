@@ -25,6 +25,12 @@ compctl -K _make_pbj ./make.pbj '''
 
 import inspect
 
+from argparse import ArgumentParser
+
+def default_parser(name):
+    parser = ArgumentParser(sys.argv[0] + ' ' + name)
+    return parser
+
 class Builder:
     def __init__(self, name):
         self.name = name
@@ -49,7 +55,7 @@ class Builder:
                 self.targets.append(target)
                 return target
             return meta
-        raise AttributeError
+        raise AttributeError('Unknown target type: %s' % name)
     
     def add(self, target):
         self.targets.append(target)
@@ -134,7 +140,8 @@ class Builder:
             else:
                 pargs = []
                 dargs = {}
-                res = default_parser()
+                res = default_parser(name)
+            LOG.info('checking dependencies for "%s"' % name)
             if target.check_depends(self) or res.force:
                 try:
                     LOG.info('building target "%s"' % name)
