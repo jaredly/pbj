@@ -25,11 +25,18 @@ compctl -K _make_pbj ./make.pbj '''
 
 import inspect
 
-from argparse import ArgumentParser
+import argparse
 
-def default_parser(name):
-    parser = ArgumentParser(sys.argv[0] + ' ' + name)
-    return parser
+def default_parser(name, args):
+    parser = argparse.ArgumentParser(sys.argv[0] + ' ' + name)
+    return parser.parse_args(args)
+
+base_parser = argparse.ArgumentParser()
+base_parser.add_argument('--list', '-l', help='list completion options', action='store_true')
+base_parser.add_argument('--zsh', help='''output zsh completion function
+(to get completion, try `./make.pbj --zsh >> ~/.zshrc`)''', action='store_true')
+base_parser.add_argument('target', help='the build target', default=None)
+base_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
 class Builder:
     def __init__(self, name):
@@ -100,9 +107,7 @@ class Builder:
         print res
 
     def run(self):
-        if len(sys.argv) < 2:
-            self.help()
-            return
+        args = base_parser.parse_args()
         targets = {}
         for target in self.targets:
             if targets.has_key(target.name):
@@ -110,48 +115,45 @@ class Builder:
                                     % target.name)
             targets[target.name] = target
 
-        force = False
-        name = sys.argv.pop(1)
-        if name == '--list':
-            if len(sys.argv) == 1:
+        if args.list:
+            if not args.target or args.target not in targets:
                 print ' '.join(targets.keys())
             else:
                 ## ?? why split the first argument ??
+                target = targets[args.target]
+                print target.get_completion(args.rest)
+                '''
                 parts = sys.argv[1].split()
                 if len(parts)>1 and parts[1] in targets:
                     target = targets[parts[1]]
                     print ' '.join(target.get_completion())
                 else:
                     print ' '.join(targets.keys())
+                    '''
             return
-        elif name == '--zsh':
+        elif args.zsh:
             print ZSH_OUT
             return 
-        '''
-        elif name in ('-f', '--force'):
-            force = True
-            name = sys.argv.pop(1)
-        '''
-        if name in targets:
-            target = targets[name]
+        if args.target in targets:
+            target = targets[args.target]
             options = None
             if target.argparser:
-                pargs, dargs, res = target.argparser()
+                pargs, dargs, res = target.argparser(args.rest)
             else:
                 pargs = []
                 dargs = {}
-                res = default_parser(name)
-            LOG.info('checking dependencies for "%s"' % name)
+                res = default_parser(args.target, args.rest)
+            LOG.info('checking dependencies for "%s"' % args.target)
             if target.check_depends(self) or res.force:
                 try:
-                    LOG.info('building target "%s"' % name)
+                    LOG.info('building target "%s"' % args.target)
                     target.run(*pargs, **dargs)
-                    LOG.info('finished building target "%s"' % name)
+                    LOG.info('finished building target "%s"' % args.target)
                 except PBJFailed:
-                    LOG.info('failed to build %s' % name)
+                    LOG.info('failed to build %s' % args.target)
             else:
-                LOG.info('nothing to do for %s' % name)
+                LOG.info('nothing to do for %s' % args.target)
         else:
-            LOG.error('Unknown target %s' % name)
+            LOG.error('Unknown target %s' % args.target)
 
 # vim: et sw=4 sts=4

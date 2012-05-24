@@ -6,7 +6,7 @@ from target import Target
 class ConfigurationError(Exception):
     pass
 
-@register('clean', required=1)
+@register('clean')
 class CleanTarget(Target):
     def __init__(self, *files, **kwargs):
         if not files:

@@ -97,8 +97,8 @@ def make_argparser(name, fn, target_args, always):
         parser.add_argument('--' + argspec.varargs, nargs='*',
                 help=helps.get(argspec.varargs, None), type=typs.get(arg, str))
 
-    def meta():
-        res = parser.parse_args()
+    def meta(args):
+        res = parser.parse_args(args)
         dct = vars(res)
         pargs = list(dct[i] for i in pos)
         dargs = dict((i, dct[i]) for i, j in opt)
@@ -166,7 +166,7 @@ class Target:
             return True
         return changed
 
-    def get_completion(self):
+    def get_completion(self, stuff=None):
         return self.completion
 
     def run(self, *pargs, **dargs):
