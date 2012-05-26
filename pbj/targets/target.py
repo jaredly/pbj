@@ -89,8 +89,17 @@ def make_argparser(name, fn, target_args, always):
         parser.add_argument(arg, help=helps.get(arg, None), type=typs.get(arg, str))
         ## add type=, work with flags, etc
 
+    shorts = []
+    argnames = {}
     for arg, default in opt:
-        parser.add_argument('--' + arg, default=default,
+        if arg[0] in shorts:
+            argnames[arg] = ['--' + arg]
+        else:
+            shorts.append(arg[0])
+            argnames[arg] = ['--' + arg, '--' + arg[0]]
+
+    for arg, default in opt:
+        parser.add_argument(*argnames[arg], dest=arg, default=default,
                 help=helps.get(arg, None), type=typs.get(arg, str))
 
     if argspec.varargs:
