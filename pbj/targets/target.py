@@ -117,7 +117,7 @@ def make_argparser(name, fn, target_args, always):
             argnames[arg] = ['--' + arg]
         else:
             shorts.append(arg[0])
-            argnames[arg] = ['--' + arg, '--' + arg[0]]
+            argnames[arg] = ['--' + arg, '-' + arg[0]]
 
     for arg, default in opt:
         t = typs.get(arg, str)

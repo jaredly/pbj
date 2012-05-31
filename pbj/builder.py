@@ -31,6 +31,7 @@ def default_parser(name, args):
     parser = argparse.ArgumentParser(sys.argv[0] + ' ' + name)
     return parser.parse_args(args)
 
+## TODO: show a list of the targets for help message
 base_parser = argparse.ArgumentParser()
 base_parser.add_argument('--list', '-l', help='list completion options', action='store_true')
 base_parser.add_argument('--zsh', help='''output zsh completion function
