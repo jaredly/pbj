@@ -28,6 +28,8 @@ TYPS = {
     'float': float,
     'str': str,
     'bool': bool,
+    'fflag': 'fflag',
+    'tflag': 'tflag',
 }
 def parsedoc(text):
     helps = {}
@@ -70,7 +72,17 @@ def parse_argspec(argspec, target_args):
     return positional, optional
 
 def make_argparser(name, fn, target_args, always):
-    '''Generate an option parser based on the function arguments'''
+    '''Generate an option parser based on the function arguments
+    
+    Arguments:
+        name(str):        the function name (used in help output)
+        fn(function):     the function
+        target_args(int): how many function arguments will be provided by the
+                          target class, and not from the command line
+        always(bool):     if false, add the --force option
+    Returns:
+        a meta function which takes command line arguments.
+    '''
 
     docs = pydoc.getdoc(fn)
     syn, rest = pydoc.splitdoc(docs)
@@ -86,8 +98,17 @@ def make_argparser(name, fn, target_args, always):
     pos, opt = parse_argspec(argspec, target_args)
 
     for arg in pos:
-        parser.add_argument(arg, help=helps.get(arg, None), type=typs.get(arg, str))
-        ## add type=, work with flags, etc
+        t = typs.get(arg, str)
+        print t
+        if t=='fflag':
+            parser.add_argument(arg, help=helps.get(arg, None),
+                                action='store_true')
+        elif t=='tflag':
+            parser.add_argument(arg, help=helps.get(arg, None),
+                                action='store_false')
+        else:
+            parser.add_argument(arg, help=helps.get(arg, None),
+                                type=typs.get(arg, str))
 
     shorts = []
     argnames = {}
@@ -99,14 +120,31 @@ def make_argparser(name, fn, target_args, always):
             argnames[arg] = ['--' + arg, '--' + arg[0]]
 
     for arg, default in opt:
-        parser.add_argument(*argnames[arg], dest=arg, default=default,
-                help=helps.get(arg, None), type=typs.get(arg, str))
+        t = typs.get(arg, str)
+        if t=='fflag':
+            parser.add_argument(*argnames[arg], dest=arg,
+                                help=helps.get(arg, None), action='store_true')
+        elif t=='tflag':
+            parser.add_argument(*argnames[arg], dest=arg,
+                                help=helps.get(arg, None), action='store_false')
+        else:
+            parser.add_argument(*argnames[arg], dest=arg, default=default,
+                    help=helps.get(arg, None), type=typs.get(arg, str))
 
     if argspec.varargs:
         parser.add_argument('--' + argspec.varargs, nargs='*',
                 help=helps.get(argspec.varargs, None), type=typs.get(arg, str))
 
     def meta(args):
+        '''Convert command-line arguments into *args and **kwargs for the function
+
+        Arguments:
+            args[str]: command-line arguments
+        Returns:
+            pargs[args]: positional arguments
+            dargs(dict): optional keyword arguments
+            res:         the "Namespace" object with all the arguments together
+        '''
         res = parser.parse_args(args)
         dct = vars(res)
         pargs = list(dct[i] for i in pos)
