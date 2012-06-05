@@ -27,10 +27,6 @@ import inspect
 
 import argparse
 
-def default_parser(name, args):
-    parser = argparse.ArgumentParser(sys.argv[0] + ' ' + name)
-    return parser.parse_args(args)
-
 ## TODO: show a list of the targets for help message
 base_parser = argparse.ArgumentParser()
 base_parser.add_argument('--list', '-l',
@@ -67,7 +63,9 @@ class Builder:
     def group(self, name=None, depends=[], help=''):
         def meta(cls):
             if not help and cls.__doc__:
-                help = pydoc.getdoc(cls)
+                _help = pydoc.getdoc(cls)
+            else:
+                _help = help
 
             children = []
 
@@ -80,7 +78,7 @@ class Builder:
                     self.targets.remove(value)
 
             newgroup = GroupTarget(name=name, depends=depends,
-                    help=help, children=children)
+                    help=_help, children=children)
             self.targets.append(newgroup)
             return newgroup
 
@@ -93,22 +91,28 @@ class Builder:
         return target
     
     def _resolve(self, dep):
-        changed = False
-        found = False
-        for target in self.targets:
-            if target.applies_to(dep):
-                found = True
-                ## TODO: kill circular deps
-                if target.check_depends(self):
-                    LOG.info('building dependent target "%s" (%s)'
-                                % (target.name, dep))
-                    target.run()
-                    changed = True
-                else:
-                    LOG.info('nothing to do for "%s" (%s)' % (target.name, dep))
-        if not found and dep[0] == '@':
+        applicable = self.get_targets_for(dep)
+        if not applicable and dep.startswith('@'):
             raise PBJFailed('dependency not found "%s"' % dep)
+
+        changed = False
+        for target in applicable:
+            if target.check_depends(self):
+                LOG.info('building dependent target "%s" (%s)'
+                            % (target.name, dep))
+                target.run()
+                changed = True
+            else:
+                LOG.info('nothing to do for "%s" (%s)' % (target.name, dep))
         return changed
+
+    def get_targets_for(self, dep):
+        targets = []
+        for target in self.targets:
+            res = target.applies_to(dep)
+            print target
+            targets += res
+        return targets
     
     def help(self):
         res = '## build targets ##\n'
@@ -146,17 +150,8 @@ class Builder:
             if not args.target or args.target not in targets:
                 print ' '.join(targets.keys())
             else:
-                ## ?? why split the first argument ??
                 target = targets[args.target]
                 print target.get_completion(args.rest)
-                '''
-                parts = sys.argv[1].split()
-                if len(parts)>1 and parts[1] in targets:
-                    target = targets[parts[1]]
-                    print ' '.join(target.get_completion())
-                else:
-                    print ' '.join(targets.keys())
-                    '''
             return
 
         elif args.zsh:

@@ -13,15 +13,19 @@ from ..clog import LOG
 
 @build.target
 def make(type, weeks=5, outfile=consts.OUTFILE, debug=False):
-    """Generate the summary file for a given number of weeks
+    ""Generate the summary file for a given number of weeks
 
     Arguments:
         type(str):      the type of output
         weeks(int):     the number of weeks
         outfile(str):   the output filename
         debug(flag):    enable debug output
-    """
+    ""
 '''
+
+def default_parser(name, args):
+    parser = argparse.ArgumentParser(sys.argv[0] + ' ' + name)
+    return parser.parse_args(args)
 
 ##THINK ABOUT: conditionally disabling help parsing?
 
@@ -207,7 +211,9 @@ class Target:
         self.help = help
 
     def applies_to(self, target):
-        return '@' + self.name == target
+        if '@' + self.name == target:
+            return [self]
+        return []
 
     def check_depends(self, builder):
         LOG.info('checking dependencies for "%s"' % self.name)
@@ -235,8 +241,8 @@ class Target:
         self.has_run = True
 
     def build(self, builder, arglist):
-        build_needed = self.check_depends(builder)
         pargs, dargs, res = self.argparser(arglist)
+        build_needed = self.check_depends(builder)
         if build_needed or res.force:
             try:
                 LOG.info('building target "%s"' % self.name)

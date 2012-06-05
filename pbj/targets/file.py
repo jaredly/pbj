@@ -34,7 +34,9 @@ class FileTarget(Target):
         self.filename = fname
 
     def applies_to(self, target):
-        return target in ['@' + self.name, self.filename]
+        if target in ['@' + self.name, self.filename]:
+            return [self]
+        return []
 
     def check_depends(self, builder):
         if Target.check_depends(self, builder):
