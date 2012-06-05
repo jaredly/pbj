@@ -27,6 +27,8 @@ class CmdTarget(Target):
         if self.echo:
             print ' '.join(self.command)
         o, e = cmd(*self.command, shell=self.shell, cwd=self.cwd)
+        self.has_run = True
+        self.return_value = o
         if o:
             print o,
         if e:

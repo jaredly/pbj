@@ -14,6 +14,7 @@ def test_target(build):
 
     assert build.targets[0] == one
     assert build.targets[0].name == 'one'
+    assert one.applies_to('@one')
 
 def test_filetarget(build):
     @build.file('output/main.py')

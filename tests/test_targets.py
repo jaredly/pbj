@@ -12,6 +12,8 @@ def test_cmd(build, capture):
     one.run()
     capture.off()
     assert capture.out == 'hello\n'
+    assert one.has_run
+    assert one.return_value == 'hello\n'
 
 
 

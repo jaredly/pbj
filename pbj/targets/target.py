@@ -179,6 +179,8 @@ class Target:
         self.fn = None
         self.argparser = None
         self.passes = 0
+        self.has_run = False
+        self.return_value = None
         self.set_help(help)
 
     def __call__(self, fn):
@@ -229,7 +231,8 @@ class Target:
         if not self.fn:
             raise Exception('Invalid Configuration: '
                     'target %s has no associated function' % self.name)
-        self.fn(*pargs, **dargs)
+        self.return_value = self.fn(*pargs, **dargs)
+        self.has_run = True
 
     def build(self, builder, arglist):
         build_needed = self.check_depends(builder)
