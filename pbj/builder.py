@@ -2,7 +2,7 @@
 
 import sys
 import inspect
-from targets import reg
+from targets import reg, Target, GroupTarget
 from optparse import OptionParser
 from errors import PBJFailed
 
@@ -33,11 +33,14 @@ def default_parser(name, args):
 
 ## TODO: show a list of the targets for help message
 base_parser = argparse.ArgumentParser()
-base_parser.add_argument('--list', '-l', help='list completion options', action='store_true')
+base_parser.add_argument('--list', '-l',
+        help='list completion options', action='store_true')
 base_parser.add_argument('--zsh', help='''output zsh completion function
 (to get completion, try `./make.pbj --zsh >> ~/.zshrc`)''', action='store_true')
-base_parser.add_argument('target', help='the build target', default=None)
-base_parser.add_argument('rest', nargs=argparse.REMAINDER)
+base_parser.add_argument('target', help='the build target',
+        type=str, default=None, nargs='?')
+base_parser.add_argument('rest', help='target arguments',
+        nargs=argparse.REMAINDER)
 
 class Builder:
     def __init__(self, name):
@@ -50,10 +53,6 @@ class Builder:
             aspec = inspect.getargspec(cls.__init__)
             def meta(*pos, **kwd):
                 callframe = inspect.getouterframes(inspect.currentframe())[1]
-                '''
-                if len(pos) < required:
-                    raise TypeError('%s takes at least %s arguments' % (name, required))
-                '''
                 if not required and len(pos) == 1 and not kwd and callable(pos[0]):
                     target = cls()
                     self.targets.append(target)
@@ -64,6 +63,30 @@ class Builder:
                 return target
             return meta
         raise AttributeError('Unknown target type: %s' % name)
+
+    def group(self, name=None, depends=[], help=''):
+        def meta(cls):
+            if not help and cls.__doc__:
+                help = pydoc.getdoc(cls)
+
+            children = []
+
+            for i in dir(cls):
+                value = getattr(cls, i)
+
+                if isinstance(value, Target):
+                    assert value in self.targets
+                    children.append(value)
+                    self.targets.remove(value)
+
+            newgroup = GroupTarget(name=name, depends=depends,
+                    help=help, children=children)
+            self.targets.append(newgroup)
+            return newgroup
+
+        if callable(name) and not depends:
+            return meta(name)
+        return meta
     
     def add(self, target):
         self.targets.append(target)
@@ -109,6 +132,9 @@ class Builder:
 
     def run(self):
         args = base_parser.parse_args()
+        if args.target is None:
+            base_parser.print_help()
+            return
         targets = {}
         for target in self.targets:
             if targets.has_key(target.name):
@@ -132,28 +158,14 @@ class Builder:
                     print ' '.join(targets.keys())
                     '''
             return
+
         elif args.zsh:
             print ZSH_OUT
             return 
+
         if args.target in targets:
             target = targets[args.target]
-            options = None
-            if target.argparser:
-                pargs, dargs, res = target.argparser(args.rest)
-            else:
-                pargs = []
-                dargs = {}
-                res = default_parser(args.target, args.rest)
-            LOG.info('checking dependencies for "%s"' % args.target)
-            if target.check_depends(self) or res.force:
-                try:
-                    LOG.info('building target "%s"' % args.target)
-                    target.run(*pargs, **dargs)
-                    LOG.info('finished building target "%s"' % args.target)
-                except PBJFailed:
-                    LOG.info('failed to build %s' % args.target)
-            else:
-                LOG.info('nothing to do for %s' % args.target)
+            target.build(self, args.rest)
         else:
             LOG.error('Unknown target %s' % args.target)
 

@@ -1,6 +1,8 @@
+
 from .reg import register
 
-import target
+from .target import Target
+from .group import GroupTarget
 import cmd
 import clean
 import file

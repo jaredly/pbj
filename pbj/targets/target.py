@@ -7,6 +7,8 @@ from optparse import OptionParser
 from argparse import ArgumentParser
 from reg import register
 
+from ..clog import LOG
+
 '''argparser example:
 
 @build.target
@@ -99,7 +101,6 @@ def make_argparser(name, fn, target_args, always):
 
     for arg in pos:
         t = typs.get(arg, str)
-        print t
         if t=='fflag':
             parser.add_argument(arg, help=helps.get(arg, None),
                                 action='store_true')
@@ -168,7 +169,10 @@ class Target:
     passes = []
 
     def __init__(self, name=None, depends=[], always=False, completion=[], help=''):
-        self.name = unicode(name)
+        if name is not None:
+            self.name = unicode(name)
+        else:
+            self.name = None
         self.depends = depends
         self.always = always
         self.completion = completion
@@ -178,6 +182,9 @@ class Target:
         self.set_help(help)
 
     def __call__(self, fn):
+        if self.fn is not None:
+            raise TypeError('Target already initialized')
+
         if self.name is None:
             self.name = fn.__name__
         if self.help == '' and fn.__doc__:
@@ -185,6 +192,7 @@ class Target:
         self.fn = fn
         self.argparser = make_argparser(self.name, fn, self.passes,
                 self.always or not self.depends)
+        return self
 
     def set_help(self, help):
         short = []
@@ -200,6 +208,7 @@ class Target:
         return '@' + self.name == target
 
     def check_depends(self, builder):
+        LOG.info('checking dependencies for "%s"' % self.name)
         if type(self.depends) not in (tuple, list):
             self.depends = [self.depends]
         if not self.depends:
@@ -221,5 +230,18 @@ class Target:
             raise Exception('Invalid Configuration: '
                     'target %s has no associated function' % self.name)
         self.fn(*pargs, **dargs)
+
+    def build(self, builder, arglist):
+        build_needed = self.check_depends(builder)
+        pargs, dargs, res = self.argparser(arglist)
+        if build_needed or res.force:
+            try:
+                LOG.info('building target "%s"' % self.name)
+                self.run(*pargs, **dargs)
+                LOG.info('finished building target "%s"' % self.name)
+            except PBJFailed:
+                LOG.info('failed to build %s' % self.name)
+        else:
+            LOG.info('nothing to do for %s' % self.name)
 
 # vim: et sw=4 sts=4
