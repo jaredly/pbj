@@ -54,8 +54,4 @@ class GroupTarget(Target):
 
         return applies
 
-
-
-
-
 # vim: et sw=4 sts=4

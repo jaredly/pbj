@@ -60,30 +60,38 @@ class Builder:
             return meta
         raise AttributeError('Unknown target type: %s' % name)
 
-    def group(self, name=None, depends=[], help=''):
+    def group(self, name=None, depends=[], default=None, help=''):
         def meta(cls):
-            if not help and cls.__doc__:
-                _help = pydoc.getdoc(cls)
-            else:
+            if inspect.isclass(cls):
+                if not help and cls.__doc__:
+                    _help = pydoc.getdoc(cls)
+                else:
+                    _help = help
+
+                children = []
+
+                for i in dir(cls):
+                    value = getattr(cls, i)
+
+                    if isinstance(value, Target):
+                        children.append(value)
+            elif type(cls) in (list, tuple):
                 _help = help
+                children = cls
 
-            children = []
-
-            for i in dir(cls):
-                value = getattr(cls, i)
-
-                if isinstance(value, Target):
-                    assert value in self.targets
-                    children.append(value)
-                    self.targets.remove(value)
+            for value in children:
+                assert value in self.targets
+                self.targets.remove(value)
 
             newgroup = GroupTarget(name=name, depends=depends,
                     help=_help, children=children)
             self.targets.append(newgroup)
+
             return newgroup
 
-        if callable(name) and not depends:
+        if callable(name) and not (depends or default or help):
             return meta(name)
+
         return meta
     
     def add(self, target):
