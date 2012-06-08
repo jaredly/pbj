@@ -115,6 +115,8 @@ class Builder:
         return changed
 
     def get_targets_for(self, dep):
+        if isinstance(deb, Target):
+            return [dep]
         targets = []
         for target in self.targets:
             res = target.applies_to(dep)
