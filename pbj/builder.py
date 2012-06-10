@@ -156,11 +156,15 @@ class Builder:
             targets[target.name] = target
 
         if args.list:
-            if not args.target or args.target not in targets:
-                print ' '.join(targets.keys())
-            else:
-                target = targets[args.target]
-                print target.get_completion(args.rest)
+            if args.target:
+                items = args.target.split()[1:] ## the target is "pbj target_name"
+                if items[0] in targets:
+                    target = targets[items[0]]
+                    print ' '.join(target.get_completion(items[1:]))
+                    return
+
+            print args.target
+            print ' '.join(targets.keys())
             return
 
         elif args.zsh:
