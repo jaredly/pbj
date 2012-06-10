@@ -120,7 +120,6 @@ class Builder:
         targets = []
         for target in self.targets:
             res = target.applies_to(dep)
-            print target
             targets += res
         return targets
     

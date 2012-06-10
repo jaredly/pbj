@@ -17,6 +17,7 @@ class GroupTarget(Target):
 
         for target in children:
             self.targets[target.name] = target
+            target.depends = list(depends) + list(target.depends)
 
         self.completion = self.targets.keys()
 
@@ -50,6 +51,10 @@ class GroupTarget(Target):
             rest = target[len(prefix):]
             for child in self.targets.values():
                 res = child.applies_to('@' + rest)
+                applies += res
+        elif not target.startswith('@'):
+            for child in self.targets.values():
+                res = child.applies_to(target)
                 applies += res
 
         return applies
