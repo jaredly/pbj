@@ -158,12 +158,12 @@ class Builder:
         if args.list:
             if args.target:
                 items = args.target.split()[1:] ## the target is "pbj target_name"
-                if items[0] in targets:
+                if items and items[0] in targets:
                     target = targets[items[0]]
                     print ' '.join(target.get_completion(items[1:]))
                     return
 
-            print args.target
+            # print args.target
             print ' '.join(targets.keys())
             return
 

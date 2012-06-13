@@ -7,7 +7,7 @@ from optparse import OptionParser
 from argparse import ArgumentParser
 from reg import register
 
-from .theparser import make_argparser
+from .theparser import make_argparser, default_parser
 
 from ..clog import LOG
 
@@ -111,7 +111,13 @@ class Target:
         self.has_run = True
 
     def build(self, builder, arglist):
-        pargs, dargs, res = self.argparser(arglist)
+        if not self.argparser:
+            res = default_parser(self.name, arglist)
+            pargs = []
+            dargs = {}
+        else:
+            pargs, dargs, res = self.argparser(arglist)
+
         build_needed = self.check_depends(builder)
         if build_needed or res.force:
             try:

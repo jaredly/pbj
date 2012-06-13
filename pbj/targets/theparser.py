@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 from argparse import ArgumentParser
+import argparse
 import inspect
 import pydoc
 import sys
 
-def default_parser(name, args):
+def default_parser(name, args=[]):
     parser = argparse.ArgumentParser(sys.argv[0] + ' ' + name)
     return parser.parse_args(args)
 
