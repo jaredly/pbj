@@ -3,6 +3,8 @@
 from reg import register
 from target import Target
 
+## TODO: make specialized multi targets that all point to permutations of the same build fucntion, just with different arguments. Then the unspecified default arguments could be passed into argparse and would work for all the build targets
+
 @register('multi')
 class Multi(Target):
     def __init__(self, name, depends, help=''):

@@ -123,7 +123,7 @@ class Builder:
             targets += res
         return targets
     
-    def help(self):
+    def gen_help(self):
         res = '## build targets ##\n'
         targets = []
         maxname = 0
@@ -140,13 +140,15 @@ class Builder:
                     line += '\n'.ljust(maxname + 4 + 3) + hline
             res += line+ '\n'
         res += '\n'
-        res += GENERAL_DOCS
-        print res
+        ## res += GENERAL_DOCS
+        return res
 
     def run(self):
         args = base_parser.parse_args()
         if args.target is None:
+            ## TODO: add the target descriptions to the help output
             base_parser.print_help()
+            print self.gen_help()
             return
         targets = {}
         for target in self.targets:

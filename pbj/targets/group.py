@@ -27,7 +27,7 @@ class GroupTarget(Target):
     def print_help(self):
         print 'Group Target'
         for name in sorted(self.targets.keys()):
-            print '   ', name
+            print '   ', name, ' -- ', self.targets[name].short_help
 
     def build(self, builder, arglist):
         target = None
