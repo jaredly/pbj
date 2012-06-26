@@ -124,8 +124,9 @@ class Target:
                 LOG.info('building target "%s"' % self.name)
                 self.run(*pargs, **dargs)
                 LOG.info('finished building target "%s"' % self.name)
-            except 'man':
+            except Exception, e:
                 LOG.info('failed to build %s' % self.name)
+                raise
         else:
             LOG.info('nothing to do for %s' % self.name)
 
