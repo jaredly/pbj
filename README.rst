@@ -30,4 +30,8 @@ Cool things: targets are classes, and decorate functions.
 
 And...this project is just starting out, so I'll fill the rest in later.
 
+Included:
+
+disttest - a drop-in plugin to add a "setup.py test" for distutils
+
 Cheers.
