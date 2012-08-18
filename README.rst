@@ -2,7 +2,7 @@ Python Build Jelly
 
 **New**
 
-just added zsh completion! fond in the file ``zsh.sugar``
+just added zsh completion! found in the file ``zsh.sugar``
 
 Anyway, PBJ is a simple, extensible pythonic build framework, whose purpose is to be dead simple for the basic cases.
 
