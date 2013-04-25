@@ -5,6 +5,13 @@ from subprocess import Popen, PIPE
 import os
 
 def cmd(*command, **kw):
+    '''Run a command on the shell
+    
+    Keyword options:
+        
+        shell: False
+        cwd  : None
+    '''
     out, err = Popen(command, shell=kw.get('shell', False),
             cwd=kw.get('cwd', None), stdin=PIPE, stdout=PIPE,
             stderr=PIPE, close_fds=True).communicate()

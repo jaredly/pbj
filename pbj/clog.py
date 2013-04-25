@@ -39,6 +39,8 @@ class ConsoleHandler(logging.StreamHandler):
 class MyLogger(logging.Logger):
     def info(self, what, *a, **b):
         return logging.Logger.info(self, '[pbj] ' + what, *a, **b)
+    def base_logger(self, *a, **b):
+        return logging.Logger.info(self, *a, **b)
     def error(self, what, *a, **b):
         return logging.Logger.error(self, '[pbj][error] ' + what, *a, **b)
 

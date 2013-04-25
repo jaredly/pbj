@@ -42,6 +42,7 @@ class Builder:
     def __init__(self, name):
         self.name = name
         self.targets = []
+        self.logger = None
 
     def __getattr__(self, name):
         if name in reg.target_reg:
@@ -59,6 +60,12 @@ class Builder:
                 return target
             return meta
         raise AttributeError('Unknown target type: %s' % name)
+
+    def log(self, *items):
+        if self.logger:
+            self.logger.info(*items)
+        else:
+            LOG.warning('Tried to log, but no logger registered', *items)
 
     def group(self, name=None, depends=[], default=None, help=''):
         def meta(cls):
